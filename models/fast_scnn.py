@@ -9,6 +9,7 @@ import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 __all__ = ['FastSCNN', 'get_fast_scnn']
 
@@ -115,6 +116,30 @@ class LinearBottleneck(nn.Module):
         return out
 
 
+class AdaptiveAvgPool2dCustom(nn.Module):
+    def __init__(self, output_size):
+        super(AdaptiveAvgPool2dCustom, self).__init__()
+        self.output_size = np.array(output_size)
+
+    def forward(self, x: torch.Tensor):
+        '''
+        Args:
+            x: shape (batch size, channel, height, width)
+        Returns:
+            x: shape (batch size, channel, 1, output_size)
+        '''
+        shape_x = x.shape
+        if(shape_x[-1] < self.output_size.item()):
+            paddzero = torch.zeros((shape_x[0], shape_x[1], shape_x[2], self.output_size[-1] - shape_x[-1]))
+            # paddzero = paddzero.to('cuda:0')
+            x = torch.cat((x, paddzero), axis=-1)
+
+        stride_size = np.floor(np.array(x.shape[-2:]) / self.output_size).astype(np.int32)
+        kernel_size = np.array(x.shape[-2:]) - (self.output_size - 1) * stride_size
+        avg = nn.AvgPool2d(kernel_size=list(kernel_size), stride=list(stride_size))
+        x = avg(x)
+        return x
+
 class PyramidPooling(nn.Module):
     """Pyramid pooling module"""
 
@@ -128,7 +153,8 @@ class PyramidPooling(nn.Module):
         self.out = _ConvBNReLU(in_channels * 2, out_channels, 1)
 
     def pool(self, x, size):
-        avgpool = nn.AdaptiveAvgPool2d(size)
+        # avgpool = nn.AdaptiveAvgPool2d(size)
+        avgpool = AdaptiveAvgPool2dCustom(size)
         return avgpool(x)
 
     def upsample(self, x, size):
@@ -240,18 +266,22 @@ def get_fast_scnn(dataset='citys', pretrained=False, root='./weights', map_cpu=F
         'ade20k': 'ade',
         'coco': 'coco',
         'citys': 'citys',
+        'wire': 'wire',
     }
     from data_loader import datasets
     model = FastSCNN(datasets[dataset].NUM_CLASS, **kwargs)
     if pretrained:
         if(map_cpu):
             model.load_state_dict(torch.load(os.path.join(root, 'fast_scnn_%s.pth' % acronyms[dataset]), map_location='cpu'))
+            # model.load_state_dict(torch.load(os.path.join(root, "best_model_0.pth"), map_location='cpu'))
         else:
             model.load_state_dict(torch.load(os.path.join(root, 'fast_scnn_%s.pth' % acronyms[dataset])))
+            # model.load_state_dict(torch.load(os.path.join(root, "best_model_0.pth")))
     return model
 
 
 if __name__ == '__main__':
-    img = torch.randn(2, 3, 256, 512)
+    img = torch.randn(1, 3, 400, 640)
     model = get_fast_scnn('citys')
-    outputs = model(img)
+    # outputs = model(img)
+    print(model)

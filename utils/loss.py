@@ -33,7 +33,7 @@ class MixSoftmaxCrossEntropyLoss(nn.CrossEntropyLoss):
 
 
 class SoftmaxCrossEntropyOHEMLoss(nn.Module):
-    def __init__(self, ignore_label=-1, thresh=0.7, min_kept=256, use_weight=True, **kwargs):
+    def __init__(self, ignore_label=-1, thresh=0.7, min_kept=256, use_weight=False, **kwargs):
         super(SoftmaxCrossEntropyOHEMLoss, self).__init__()
         self.ignore_label = ignore_label
         self.thresh = float(thresh)
@@ -84,7 +84,6 @@ class SoftmaxCrossEntropyOHEMLoss(nn.Module):
         input_label.fill(self.ignore_label)
         input_label[valid_inds] = label
         valid_flag_new = input_label != self.ignore_label
-        # print(np.sum(valid_flag_new))
         target = Variable(torch.from_numpy(input_label.reshape(target.size())).long().cuda())
 
         return self.criterion(predict, target)

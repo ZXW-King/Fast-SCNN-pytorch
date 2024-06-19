@@ -1,7 +1,9 @@
 from .cityscapes import CitySegmentation
+from .wire_load import WireSegmentation
 
 datasets = {
     'citys': CitySegmentation,
+    'wire': WireSegmentation
 }
 
 

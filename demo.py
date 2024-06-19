@@ -11,12 +11,12 @@ parser = argparse.ArgumentParser(
     description='Predict segmentation result from a given image')
 parser.add_argument('--model', type=str, default='fast_scnn',
                     help='model name (default: fast_scnn)')
-parser.add_argument('--dataset', type=str, default='citys',
+parser.add_argument('--dataset', type=str, default='wire',
                     help='dataset name (default: citys)')
-parser.add_argument('--weights-folder', default='./weights',
+parser.add_argument('--weights-folder', default='./train_weights',
                     help='Directory for saving checkpoint models')
 parser.add_argument('--input-pic', type=str,
-                    default='./datasets/citys/leftImg8bit/test/berlin/berlin_000000_000019_leftImg8bit.png',
+                    default='./dataset/02_6178896901985513.jpg',
                     help='path to the input picture')
 parser.add_argument('--outdir', default='./test_result', type=str,
                     help='path to save the predict result')
@@ -45,6 +45,7 @@ def demo():
     model.eval()
     with torch.no_grad():
         outputs = model(image)
+        print(outputs[0].shape)
     pred = torch.argmax(outputs[0], 1).squeeze(0).cpu().data.numpy()
     mask = get_color_pallete(pred, args.dataset)
     outname = os.path.splitext(os.path.split(args.input_pic)[-1])[0] + '.png'

@@ -116,3 +116,7 @@ weights/
 
 # result
 test_result/
+*.png
+*.jpg
+train_weights/
+log/

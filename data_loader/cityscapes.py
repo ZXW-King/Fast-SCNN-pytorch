@@ -208,5 +208,6 @@ def _get_city_pairs(folder, split='train'):
 
 
 if __name__ == '__main__':
-    dataset = CitySegmentation()
+    dataset = CitySegmentation(root="/media/xin/data/data/seg_data/public/data/cityscapes")
     img, label = dataset[0]
+    print(img)

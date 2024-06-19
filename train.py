@@ -23,9 +23,11 @@ def parse_args():
                         help='model name (default: fast_scnn)')
     parser.add_argument('--dataset', type=str, default='citys',
                         help='dataset name (default: citys)')
-    parser.add_argument('--base-size', type=int, default=1024,
+    parser.add_argument('--data_path', type=str, default='citys',
+                        help='dataset name (default: citys)')
+    parser.add_argument('--base-size', type=int, default=400,
                         help='base image size')
-    parser.add_argument('--crop-size', type=int, default=768,
+    parser.add_argument('--crop-size', type=int, default=640,
                         help='crop image size')
     parser.add_argument('--train-split', type=str, default='train',
                         help='dataset train split (default: train)')
@@ -49,12 +51,12 @@ def parse_args():
     # checking point
     parser.add_argument('--resume', type=str, default=None,
                         help='put the path to resuming file if needed')
-    parser.add_argument('--save-folder', default='./weights',
+    parser.add_argument('--save-folder', default='./train_weights',
                         help='Directory for saving checkpoint models')
     # evaluation only
     parser.add_argument('--eval', action='store_true', default=False,
                         help='evaluation only')
-    parser.add_argument('--no-val', action='store_true', default=True,
+    parser.add_argument('--no-val', action='store_true', default=False,
                         help='skip validation during training')
     # the parser
     args = parser.parse_args()
@@ -75,8 +77,8 @@ class Trainer(object):
         ])
         # dataset and dataloader
         data_kwargs = {'transform': input_transform, 'base_size': args.base_size, 'crop_size': args.crop_size}
-        train_dataset = get_segmentation_dataset(args.dataset, split=args.train_split, mode='train', **data_kwargs)
-        val_dataset = get_segmentation_dataset(args.dataset, split='val', mode='val', **data_kwargs)
+        train_dataset = get_segmentation_dataset(args.dataset, root=args.data_path,split=args.train_split, mode='train', **data_kwargs)
+        val_dataset = get_segmentation_dataset(args.dataset, root=args.data_path,split='val', mode='val', **data_kwargs)
         self.train_loader = data.DataLoader(dataset=train_dataset,
                                             batch_size=args.batch_size,
                                             shuffle=True,
@@ -101,7 +103,7 @@ class Trainer(object):
 
         # create criterion
         self.criterion = MixSoftmaxCrossEntropyOHEMLoss(aux=args.aux, aux_weight=args.aux_weight,
-                                                        ignore_index=-1).to(args.device)
+                                                        ignore_index=-1,use_weight=False).to(args.device)
 
         # optimizer
         self.optimizer = torch.optim.SGD(self.model.parameters(),
@@ -147,11 +149,11 @@ class Trainer(object):
 
             if self.args.no_val:
                 # save every epoch
-                save_checkpoint(self.model, self.args, is_best=False)
+                save_checkpoint(self.model, self.args, epoch,is_best=False)
             else:
                 self.validation(epoch)
 
-        save_checkpoint(self.model, self.args, is_best=False)
+        # save_checkpoint(self.model, self.args, epoch,is_best=False)
 
     def validation(self, epoch):
         is_best = False
@@ -165,22 +167,22 @@ class Trainer(object):
             pred = pred.cpu().data.numpy()
             self.metric.update(pred, target.numpy())
             pixAcc, mIoU = self.metric.get()
-            print('Epoch %d, Sample %d, validation pixAcc: %.3f%%, mIoU: %.3f%%' % (
-                epoch, i + 1, pixAcc * 100, mIoU * 100))
+        print('Epoch %d, validation pixAcc: %.3f%%, mIoU: %.3f%%' % (
+            epoch, pixAcc * 100, mIoU * 100))
 
         new_pred = (pixAcc + mIoU) / 2
         if new_pred > self.best_pred:
             is_best = True
             self.best_pred = new_pred
-        save_checkpoint(self.model, self.args, is_best)
+        save_checkpoint(self.model, self.args, epoch,is_best)
 
 
-def save_checkpoint(model, args, is_best=False):
+def save_checkpoint(model, args, epoch,is_best=False):
     """Save Checkpoint"""
     directory = os.path.expanduser(args.save_folder)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    filename = '{}_{}.pth'.format(args.model, args.dataset)
+    filename = '{}_{}_{}.pth'.format(epoch,args.model, args.dataset)
     save_path = os.path.join(directory, filename)
     torch.save(model.state_dict(), save_path)
     if is_best:
