@@ -2,6 +2,7 @@ import sys, os
 
 import argparse
 
+import matplotlib.pyplot as plt
 import torch
 
 from onnx_test.onnxmodel import ONNXModel
@@ -16,9 +17,10 @@ W, H = 2048, 1024
 def GetArgs():
     parser = argparse.ArgumentParser(description="",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--image", type=str, default="../dataset/ulm_000003_000019_leftImg8bit.png",help="")
-    parser.add_argument("--model", type=str, default="fast_scnn.onnx",help="")
-    parser.add_argument('--dataset', type=str, default='citys',
+    # parser.add_argument("--image", type=str, default="../dataset/02_6178896901985513.jpg",help="")
+    parser.add_argument("--image", type=str, default="/media/xin/data/data/seg_data/ours/ORIGIN/20240617_wire/test_select.txt",help="")
+    parser.add_argument("--model", type=str, default="onnx_model/fast_scnn_wire_best.onnx",help="")
+    parser.add_argument('--dataset', type=str, default='wire',
                         help='dataset name (default: citys)')
 
     args = parser.parse_args()
@@ -45,11 +47,31 @@ def test_onnx(img_path, model_file,dataset):
     output = model.forward(img)
     pred = torch.argmax(torch.from_numpy(output[0]), 1).squeeze(0).cpu().data.numpy()
     mask = get_color_pallete(pred, dataset)
-    mask.save("res.png")
+    # 将调色板图像转换为 RGB
+    out_img = mask.convert("RGB")
+    # 将 PIL Image 转换为 NumPy 数组
+    cv_image = np.array(out_img)
+    # 将 RGB 转换为 BGR（因为 OpenCV 使用 BGR）
+    cv_image = cv2.cvtColor(cv_image, cv2.COLOR_RGB2BGR)
+
+    # 水平方向合并两张图像
+    merged_image = np.hstack((img_org, cv_image))
+    return merged_image
 
 def main():
     args = GetArgs()
-    test_onnx(args.image, args.model,args.dataset)
+    img_path = args.image
+    if img_path.endswith(".txt"):
+        with open(img_path) as f:
+            for img in f:
+                merged_image = test_onnx(img.strip(), args.model,args.dataset)
+                cv2.imshow('Converted Image', merged_image)
+                cv2.waitKey(500)
+    else:
+        merged_image = test_onnx(img_path,args.model,args.dataset)
+        cv2.imshow('Converted Image', merged_image)
+        cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':

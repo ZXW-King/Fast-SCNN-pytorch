@@ -40,7 +40,7 @@ def parse_args():
                         help='number of epochs to train (default: 100)')
     parser.add_argument('--start_epoch', type=int, default=0,
                         metavar='N', help='start epochs (default:0)')
-    parser.add_argument('--batch-size', type=int, default=2,
+    parser.add_argument('--batch-size', type=int, default=16,
                         metavar='N', help='input batch size for training (default: 12)')
     parser.add_argument('--lr', type=float, default=1e-2, metavar='LR',
                         help='learning rate (default: 1e-2)')
@@ -188,7 +188,8 @@ def save_checkpoint(model, args, epoch,is_best=False):
     if is_best:
         best_filename = '{}_{}_best_model.pth'.format(args.model, args.dataset)
         best_filename = os.path.join(directory, best_filename)
-        shutil.copyfile(filename, best_filename)
+        torch.save(model.state_dict(), best_filename)
+
 
 
 if __name__ == '__main__':

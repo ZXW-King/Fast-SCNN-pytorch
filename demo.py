@@ -1,9 +1,9 @@
 import os
 import argparse
 import torch
-
+from data_loader import datasets
 from torchvision import transforms
-from models.fast_scnn import get_fast_scnn
+from models.fast_scnn import get_fast_scnn, FastSCNN
 from PIL import Image
 from utils.visualize import get_color_pallete
 
@@ -13,7 +13,7 @@ parser.add_argument('--model', type=str, default='fast_scnn',
                     help='model name (default: fast_scnn)')
 parser.add_argument('--dataset', type=str, default='wire',
                     help='dataset name (default: citys)')
-parser.add_argument('--weights-folder', default='./train_weights',
+parser.add_argument('--weights', default='./train_weights/fast_scnn_wire_best_model.pth',
                     help='Directory for saving checkpoint models')
 parser.add_argument('--input-pic', type=str,
                     default='./dataset/02_6178896901985513.jpg',
@@ -40,7 +40,8 @@ def demo():
     ])
     image = Image.open(args.input_pic).convert('RGB')
     image = transform(image).unsqueeze(0).to(device)
-    model = get_fast_scnn(args.dataset, pretrained=True, root=args.weights_folder, map_cpu=args.cpu).to(device)
+    model = FastSCNN(datasets[args.dataset].NUM_CLASS).to(device)
+    model.load_state_dict(torch.load(args.weights))
     print('Finished loading model!')
     model.eval()
     with torch.no_grad():
