@@ -10,7 +10,7 @@ def GetArgs():
     parser = argparse.ArgumentParser(description="",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--weights", type=str, default="../train_weights/fast_scnn_wire_best_model.pth",help="model path")
-    parser.add_argument("--output", type=str, default="onnx_model/fast_scnn_wire_best.onnx",help="output model path")
+    parser.add_argument("--output", type=str, default="onnx_model/fast_scnn_wire_best_argmax.onnx",help="output model path")
     parser.add_argument('--dataset', type=str, default='wire',
                         help='dataset name (default: citys)')
 
@@ -22,7 +22,7 @@ def main():
     H, W = 480, 640
     args = GetArgs()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = FastSCNN(datasets[args.dataset].NUM_CLASS).to(device)
+    model = FastSCNN(datasets[args.dataset].NUM_CLASS,test=True).to(device)
     model.load_state_dict(torch.load(args.weights))
     model.eval()
     # adaptive_avg_pool2d

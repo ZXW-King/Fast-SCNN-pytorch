@@ -15,9 +15,10 @@ __all__ = ['FastSCNN', 'get_fast_scnn']
 
 
 class FastSCNN(nn.Module):
-    def __init__(self, num_classes, aux=False, **kwargs):
+    def __init__(self, num_classes, aux=False,test=False, **kwargs):
         super(FastSCNN, self).__init__()
         self.aux = aux
+        self.test = test
         self.learning_to_downsample = LearningToDownsample(32, 48, 64)
         self.global_feature_extractor = GlobalFeatureExtractor(64, [64, 96, 128], 128, 6, [3, 3, 3])
         self.feature_fusion = FeatureFusionModule(64, 128, 128)
@@ -39,12 +40,15 @@ class FastSCNN(nn.Module):
         x = self.classifier(x)
         outputs = []
         x = F.interpolate(x, size, mode='bilinear', align_corners=True)
+        if self.test:
+            x = torch.argmax(x, 1).squeeze(0)
         outputs.append(x)
         if self.aux:
             auxout = self.auxlayer(higher_res_features)
             auxout = F.interpolate(auxout, size, mode='bilinear', align_corners=True)
             outputs.append(auxout)
-        return tuple(outputs)
+        # return tuple(outputs)
+        return outputs
 
 
 class _ConvBNReLU(nn.Module):

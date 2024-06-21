@@ -40,16 +40,20 @@ def demo():
     ])
     image = Image.open(args.input_pic).convert('RGB')
     image = transform(image).unsqueeze(0).to(device)
-    model = FastSCNN(datasets[args.dataset].NUM_CLASS).to(device)
+    model = FastSCNN(datasets[args.dataset].NUM_CLASS,test=True).to(device)
     model.load_state_dict(torch.load(args.weights))
     print('Finished loading model!')
     model.eval()
     with torch.no_grad():
         outputs = model(image)
         print(outputs[0].shape)
-    pred = torch.argmax(outputs[0], 1).squeeze(0).cpu().data.numpy()
+    # pred = torch.argmax(outputs[0], 1).squeeze(0).cpu().data.numpy()
+    pred = outputs[0].cpu().data.numpy()
     mask = get_color_pallete(pred, args.dataset)
     outname = os.path.splitext(os.path.split(args.input_pic)[-1])[0] + '.png'
+    import matplotlib.pyplot as plt
+    plt.imshow(mask)
+    plt.show()
     mask.save(os.path.join(args.outdir, outname))
 
 
