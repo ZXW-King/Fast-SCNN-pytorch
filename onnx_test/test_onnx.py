@@ -20,9 +20,8 @@ def GetArgs():
     parser.add_argument("--image", type=str, default="/media/xin/data/data/seg_data/ours/ORIGIN/20240617_wire/test_select.txt",help="")
     # parser.add_argument("--model", type=str, default="onnx_model/fast_scnn_wire_best.onnx",help="")
     parser.add_argument("--model", type=str, default="onnx_model/fast_scnn_wire_best_argmax.onnx",help="")
-    parser.add_argument('--dataset', type=str, default='wire',
-                        help='dataset name (default: citys)')
-
+    parser.add_argument('--dataset', type=str, default='wire',help='dataset name (default: citys)')
+    parser.add_argument('--show_rgb', action='store_true')
     args = parser.parse_args()
     return args
 
@@ -49,8 +48,8 @@ def test_onnx(img_path, model_file,dataset,show_rgb=True):
     # pred = arg.squeeze(0).cpu().data.numpy()
     pred = output[0]
     if not show_rgb:
-        res = (pred * 255).astype(np.uint8)
-        return res
+        cv_image = (pred * 255).astype(np.uint8)
+        img_org = cv2.cvtColor(img_org, cv2.COLOR_BGR2GRAY)
     else:
         mask = get_color_pallete(pred, dataset)
         # 将调色板图像转换为 RGB
@@ -67,14 +66,15 @@ def test_onnx(img_path, model_file,dataset,show_rgb=True):
 def main():
     args = GetArgs()
     img_path = args.image
+    show_rgb = args.show_rgb
     if img_path.endswith(".txt"):
         with open(img_path) as f:
             for img in f:
-                merged_image = test_onnx(img.strip(), args.model,args.dataset,show_rgb=False)
+                merged_image = test_onnx(img.strip(), args.model,args.dataset,show_rgb=show_rgb)
                 cv2.imshow('Converted Image', merged_image)
                 cv2.waitKey(500)
     else:
-        merged_image = test_onnx(img_path,args.model,args.dataset,show_rgb=False)
+        merged_image = test_onnx(img_path,args.model,args.dataset,show_rgb=show_rgb)
         cv2.imshow('Converted Image', merged_image)
         cv2.waitKey(0)
     cv2.destroyAllWindows()

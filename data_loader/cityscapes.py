@@ -41,7 +41,7 @@ class CitySegmentation(data.Dataset):
     NUM_CLASS = 19
 
     def __init__(self, root='./datasets/citys', split='train', mode=None, transform=None,
-                 base_size=520, crop_size=480, **kwargs):
+                 base_size=520, crop_size=480,version='', **kwargs):
         super(CitySegmentation, self).__init__()
         self.root = root
         self.split = split

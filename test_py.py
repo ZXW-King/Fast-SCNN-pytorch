@@ -21,5 +21,4 @@ if __name__ == '__main__':
     mask = np.full(3,0)
     print(mask)
     print(_class_to_index(mask))
-    skey = np.array([0, 1] + [-1] * 32)
-    print(skey)
+    nu = np.array([1,2,3,45,5])

@@ -216,7 +216,7 @@ if __name__ == '__main__':
         if not paused:
             img, label = dataset[i]
             # print(img)
-            # label[label>-1] = 255
+            label = label * 255
             label = np.array(label).astype(np.uint8)
             # t2, label = cv2.threshold(label, 127, 255, cv2.THRESH_BINARY_INV)
             # img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY).astype(np.uint8)

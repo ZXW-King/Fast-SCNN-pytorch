@@ -3,6 +3,7 @@ import argparse
 import time
 import shutil
 
+import numpy as np
 import torch
 import torch.utils.data as data
 import torch.backends.cudnn as cudnn
@@ -13,6 +14,7 @@ from models.fast_scnn import get_fast_scnn
 from utils.loss import MixSoftmaxCrossEntropyLoss, MixSoftmaxCrossEntropyOHEMLoss
 from utils.lr_scheduler import LRScheduler
 from utils.metric import SegmentationMetric
+from tensorboardX import SummaryWriter
 
 
 def parse_args():
@@ -31,6 +33,8 @@ def parse_args():
                         help='crop image size')
     parser.add_argument('--train-split', type=str, default='train',
                         help='dataset train split (default: train)')
+    parser.add_argument('--train-version', type=str, default='',
+                        help='dataset train version')
     # training hyper params
     parser.add_argument('--aux', action='store_true', default=False,
                         help='Auxiliary loss')
@@ -77,8 +81,8 @@ class Trainer(object):
         ])
         # dataset and dataloader
         data_kwargs = {'transform': input_transform, 'base_size': args.base_size, 'crop_size': args.crop_size}
-        train_dataset = get_segmentation_dataset(args.dataset, root=args.data_path,split=args.train_split, mode='train', **data_kwargs)
-        val_dataset = get_segmentation_dataset(args.dataset, root=args.data_path,split='val', mode='val', **data_kwargs)
+        train_dataset = get_segmentation_dataset(args.dataset, root=args.data_path,split=args.train_split, mode='train',version=args.train_version, **data_kwargs)
+        val_dataset = get_segmentation_dataset(args.dataset, root=args.data_path,split='val', mode='val', version=args.train_version,**data_kwargs)
         self.train_loader = data.DataLoader(dataset=train_dataset,
                                             batch_size=args.batch_size,
                                             shuffle=True,
@@ -125,7 +129,7 @@ class Trainer(object):
         start_time = time.time()
         for epoch in range(self.args.start_epoch, self.args.epochs):
             self.model.train()
-
+            loss_all = [0]
             for i, (images, targets) in enumerate(self.train_loader):
                 cur_lr = self.lr_scheduler(cur_iters)
                 for param_group in self.optimizer.param_groups:
@@ -146,10 +150,11 @@ class Trainer(object):
                     print('Epoch: [%2d/%2d] Iter [%4d/%4d] || Time: %4.4f sec || lr: %.8f || Loss: %.4f' % (
                         epoch, args.epochs, i + 1, len(self.train_loader),
                         time.time() - start_time, cur_lr, loss.item()))
-
+                loss_all.append(loss.item())
+            writer.add_scalar("train_loss",sum(loss_all)/len(loss_all),epoch)
             if self.args.no_val:
                 # save every epoch
-                save_checkpoint(self.model, self.args, epoch,is_best=False)
+                save_checkpoint(self.model, self.args, is_best=False)
             else:
                 self.validation(epoch)
 
@@ -159,6 +164,8 @@ class Trainer(object):
         is_best = False
         self.metric.reset()
         self.model.eval()
+        mIoU_all = [0]
+        pixAcc_all = [0]
         for i, (image, target) in enumerate(self.val_loader):
             image = image.to(self.args.device)
 
@@ -167,22 +174,26 @@ class Trainer(object):
             pred = pred.cpu().data.numpy()
             self.metric.update(pred, target.numpy())
             pixAcc, mIoU = self.metric.get()
+            mIoU_all.append(mIoU)
+            pixAcc_all.append(pixAcc)
+        writer.add_scalar("mIoU", sum(mIoU_all)/len(mIoU_all), epoch)
+        writer.add_scalar("pixAcc", sum(pixAcc_all)/len(pixAcc_all), epoch)
         print('Epoch %d, validation pixAcc: %.3f%%, mIoU: %.3f%%' % (
             epoch, pixAcc * 100, mIoU * 100))
-
         new_pred = (pixAcc + mIoU) / 2
         if new_pred > self.best_pred:
             is_best = True
             self.best_pred = new_pred
-        save_checkpoint(self.model, self.args, epoch,is_best)
+        save_checkpoint(self.model, self.args, is_best)
 
 
-def save_checkpoint(model, args, epoch,is_best=False):
+def save_checkpoint(model, args,is_best=False):
     """Save Checkpoint"""
     directory = os.path.expanduser(args.save_folder)
+    directory = os.path.join(directory,args.train_version)
     if not os.path.exists(directory):
         os.makedirs(directory)
-    filename = '{}_{}_{}.pth'.format(epoch,args.model, args.dataset)
+    filename = '{}_{}.pth'.format(args.model, args.dataset)
     save_path = os.path.join(directory, filename)
     torch.save(model.state_dict(), save_path)
     if is_best:
@@ -195,6 +206,10 @@ def save_checkpoint(model, args, epoch,is_best=False):
 if __name__ == '__main__':
     args = parse_args()
     trainer = Trainer(args)
+    tb_log_dir = os.path.join("log",args.train_version)
+    if not os.path.exists(tb_log_dir):
+        os.makedirs(tb_log_dir)
+    writer = SummaryWriter(log_dir=tb_log_dir)
     if args.eval:
         print('Evaluation model: ', args.resume)
         trainer.validation(args.start_epoch)
