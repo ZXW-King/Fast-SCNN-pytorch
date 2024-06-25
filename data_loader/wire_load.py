@@ -43,7 +43,7 @@ class WireSegmentation(data.Dataset):
     NUM_CLASS = 3
 
     def __init__(self, root='./datasets/citys', split='train', mode=None, transform=None,
-                 base_size=400, crop_size=640, version='s0.0.1',**kwargs):
+                 base_size=256, crop_size=640, version='s0.0.1',**kwargs):
         super(WireSegmentation, self).__init__()
         self.root = root
         self.split = split
@@ -82,11 +82,13 @@ class WireSegmentation(data.Dataset):
 
     def __getitem__(self, index):
         img = Image.open(self.images[index]).convert('RGB')
+        img = self.get_crop_img(img)
         if self.mode == 'test':
             if self.transform is not None:
                 img = self.transform(img)
             return img, os.path.basename(self.images[index])
         mask = Image.open(self.mask_paths[index])
+        mask = self.get_crop_img(mask)
         # synchrosized transform
         if self.mode == 'train':
             img, mask = self._sync_transform(img, mask)
@@ -99,6 +101,22 @@ class WireSegmentation(data.Dataset):
         if self.transform is not None:
             img = self.transform(img)
         return img, mask
+
+    def get_crop_resize_img(self,img):
+        # 裁剪图像，去掉上方20行
+        crop_box = (0, img.size[1] - int(img.size[1] / 2 // 32 * 32 * 2), img.size[0], img.size[1])
+        cropped_img = img.crop(crop_box)
+        # 计算新尺寸，裁剪后的尺寸除以32并向下取整
+        new_size = (cropped_img.size[0] // 32 * 16, cropped_img.size[1] // 32 * 16)
+        # 调整图像大小
+        resized_img = cropped_img.resize(new_size, Image.LANCZOS)
+        return resized_img
+
+    def get_crop_img(self,img):
+        # 裁剪图像
+        crop_box = (0, 224, img.size[0], img.size[1])
+        cropped_img = img.crop(crop_box)
+        return cropped_img
 
     def _val_sync_transform(self, img, mask):
         outsize = self.crop_size
@@ -218,6 +236,7 @@ if __name__ == '__main__':
             # print(img)
             label = label * 255
             label = np.array(label).astype(np.uint8)
+            print(img.shape,label.shape)
             # t2, label = cv2.threshold(label, 127, 255, cv2.THRESH_BINARY_INV)
             # img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY).astype(np.uint8)
             # 拼接原始图像和处理后的label图像

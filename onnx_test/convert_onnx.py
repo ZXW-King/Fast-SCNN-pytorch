@@ -9,8 +9,8 @@ from models.fast_scnn import get_fast_scnn, FastSCNN
 def GetArgs():
     parser = argparse.ArgumentParser(description="",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--weights", type=str, default="../train_weights/fast_scnn_wire_best_model.pth",help="model path")
-    parser.add_argument("--output", type=str, default="onnx_model/fast_scnn_wire_best_argmax_224x320.onnx",help="output model path")
+    parser.add_argument("--weights", type=str, default="/media/xin/work/github_pro/seg_model/Fast-SCNN-pytorch/train_weights/s0.0.1_480/fast_scnn_wire_best_model.pth",help="model path")
+    parser.add_argument("--output", type=str, default="onnx_model/fast_scnn_wire_best_argmax_256x640.onnx",help="output model path")
     parser.add_argument('--dataset', type=str, default='wire',
                         help='dataset name (default: citys)')
 
@@ -21,7 +21,7 @@ def main():
     # H, W = 1024, 2048
     # H, W = 480, 640
     # H, W = 640, 640
-    H, W = 224, 320
+    H, W = 256, 640
     args = GetArgs()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = FastSCNN(datasets[args.dataset].NUM_CLASS,test=True).to(device)

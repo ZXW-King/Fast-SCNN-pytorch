@@ -19,7 +19,7 @@ def GetArgs():
     # parser.add_argument("--image", type=str, default="../dataset/02_6178896901985513.jpg",help="")
     parser.add_argument("--image", type=str, default="/media/xin/data/data/seg_data/ours/ORIGIN/20240617_wire/test_select.txt",help="")
     # parser.add_argument("--model", type=str, default="onnx_model/fast_scnn_wire_best.onnx",help="")
-    parser.add_argument("--model", type=str, default="onnx_model/fast_scnn_wire_best_argmax_224x320.onnx",help="")
+    parser.add_argument("--model", type=str, default="onnx_model/fast_scnn_wire_best_argmax_256x640.onnx",help="")
     parser.add_argument('--dataset', type=str, default='wire',help='dataset name (default: citys)')
     parser.add_argument('--show_rgb', action='store_true')
     args = parser.parse_args()
@@ -29,16 +29,19 @@ def GetArgs():
 def img_resize(image,target_size):
     H,W,_ = image.shape
     t_h = target_size[0] * 2
-    diff_h = H - t_h
-    cropped_img = image[diff_h:H,:]
-    resize_img = cv2.resize(cropped_img,(target_size[1],target_size[0]))
-    return resize_img
+    diff_h = H - target_size[0]
+    cropped_img = image[diff_h:,:]
+    # diff_h = H - t_h
+    # cropped_img = image[diff_h:H,:]
+    # resize_img = cv2.resize(cropped_img,(target_size[1],target_size[0]))
+    # return resize_img
+    return cropped_img
 
 
 def test_onnx(img_path, model_file,dataset,show_rgb=True):
     model = ONNXModel(model_file)
     img_org = cv2.imread(img_path)
-    img_res = img_resize(img_org,(224,320))
+    img_res = img_resize(img_org,(256,640))
     img = cv2.cvtColor(img_res, cv2.COLOR_BGR2RGB)
     # 将图像转换为 float32 类型并归一化到 [0, 1]
     image = img.astype(np.float32) / 255.0
@@ -56,12 +59,12 @@ def test_onnx(img_path, model_file,dataset,show_rgb=True):
     output = model.forward(img)
     # arg = torch.argmax(torch.from_numpy(output[0]), 1)
     # pred = arg.squeeze(0).cpu().data.numpy()
-    pred = output[0].astype(np.float32)
-    pred = cv2.resize(pred,(320*2,224*2))
-    pred = np.pad(pred, ((480-224*2, 0),(0,0)), mode='constant', constant_values=1)
+    pred = output[0]
+    # pred = cv2.resize(pred,(320*2,224*2))
+    # pred = np.pad(pred, ((480-224*2, 0),(0,0)), mode='constant', constant_values=1)
     if not show_rgb:
         cv_image = (pred * 255).astype(np.uint8)
-        img_org = cv2.cvtColor(img_org, cv2.COLOR_BGR2GRAY)
+        img_org = cv2.cvtColor(img_res, cv2.COLOR_BGR2GRAY)
         cv2.imshow("img",img_org)
         return cv_image
     else:

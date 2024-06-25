@@ -33,7 +33,7 @@ def parse_args():
                         help='crop image size')
     parser.add_argument('--train-split', type=str, default='train',
                         help='dataset train split (default: train)')
-    parser.add_argument('--train-version', type=str, default='',
+    parser.add_argument('--train_version', type=str, default='',
                         help='dataset train version')
     # training hyper params
     parser.add_argument('--aux', action='store_true', default=False,

@@ -1,5 +1,5 @@
 import numpy as np
-
+from PIL import Image
 def _class_to_index(mask):
     key = np.array([-1, -1, -1, -1, -1, -1,
                           -1, -1, 0, 1, -1, -1,
@@ -15,10 +15,33 @@ def _class_to_index(mask):
     index = np.digitize(mask.ravel(), mapping, right=True)
     return key[index].reshape(mask.shape)
 
+def get_crop_resize_img(img_path):
+    # 使用 PIL 打开图像
+    img = Image.open(img_path)
+    # 打印原始图像的尺寸
+    print(f"Original image size: {img.size}")  # 输出原始图像的尺寸 (width, height)
+    print(img.size[1] - int(img.size[1] / 2 // 32 * 32 * 2))
+    # 裁剪图像，去掉上方20行
+    crop_box = (0, img.size[1] - int(img.size[1] / 2 // 32 * 32 * 2), img.size[0], img.size[1])
+    cropped_img = img.crop(crop_box)
+
+    # 打印裁剪后图像的尺寸
+    print(f"Cropped image size: {cropped_img.size}")
+
+    # 计算新尺寸，裁剪后的尺寸除以32并向下取整
+    new_size = (cropped_img.size[0] // 32 * 16  , cropped_img.size[1] // 32 *16)
+
+    # 调整图像大小
+    resized_img = cropped_img.resize(new_size, Image.LANCZOS)
+
+    # 打印调整大小后的图像尺寸
+    print(f"Resized image size: {resized_img.size}")
+
 
 if __name__ == '__main__':
     # mask = np.random.randint(7,22,(3,3))
     mask = np.full(3,0)
     print(mask)
     print(_class_to_index(mask))
-    nu = np.array([1,2,3,45,5])
+    get_crop_resize_img("/media/xin/work/github_pro/seg_model/Fast-SCNN-pytorch/dataset/02_6178896901985513.jpg")
+
