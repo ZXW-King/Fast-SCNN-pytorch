@@ -82,12 +82,14 @@ class WireSegmentation(data.Dataset):
 
     def __getitem__(self, index):
         img = Image.open(self.images[index]).convert('RGB')
+        # img = self.get_crop_resize_img(img)
         img = self.get_crop_img(img)
         if self.mode == 'test':
             if self.transform is not None:
                 img = self.transform(img)
             return img, os.path.basename(self.images[index])
         mask = Image.open(self.mask_paths[index])
+        # mask = self.get_crop_resize_img(mask)
         mask = self.get_crop_img(mask)
         # synchrosized transform
         if self.mode == 'train':
@@ -141,6 +143,7 @@ class WireSegmentation(data.Dataset):
         return img, mask
 
     def _sync_transform(self, img, mask):
+        """
         # random mirror  随机左右镜像翻转
         if random.random() < 0.5:
             img = img.transpose(Image.FLIP_LEFT_RIGHT)
@@ -173,6 +176,7 @@ class WireSegmentation(data.Dataset):
         if random.random() < 0.5:
             img = img.filter(ImageFilter.GaussianBlur(
                 radius=random.random()))
+        """
         # final transform
         img, mask = self._img_transform(img), self._mask_transform(mask)
         return img, mask
@@ -229,28 +233,20 @@ def _get_city_pairs(folder, version,split='train'):
 
 if __name__ == '__main__':
     dataset = WireSegmentation(root="/media/xin/data/data/seg_data/ours/train_data",split="train")
-    paused = False
     for i in range(len(dataset)):
-        if not paused:
-            img, label = dataset[i]
-            # print(img)
-            label = label * 255
-            label = np.array(label).astype(np.uint8)
-            print(img.shape,label.shape)
-            # t2, label = cv2.threshold(label, 127, 255, cv2.THRESH_BINARY_INV)
-            # img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY).astype(np.uint8)
-            # 拼接原始图像和处理后的label图像
-            # combined_img = np.hstack((img, label))
-            # 使用OpenCV显示拼接后的图像
-            # cv2.imshow('Combined Image', combined_img)
-            cv2.imshow("image",img)
-            cv2.imshow('Combined Image', label)
+        img, label = dataset[i]
+        # print(img)
+        label = label * 255
+        label = np.array(label).astype(np.uint8)
+        print(img.shape,label.shape)
+        # t2, label = cv2.threshold(label, 127, 255, cv2.THRESH_BINARY_INV)
+        # img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY).astype(np.uint8)
+        # 拼接原始图像和处理后的label图像
+        # combined_img = np.hstack((img, label))
+        # 使用OpenCV显示拼接后的图像
+        # cv2.imshow('Combined Image', combined_img)
+        cv2.imshow("image",img)
+        cv2.imshow('Combined Image', label)
+        key = cv2.waitKey(500)
 
-        key = cv2.waitKey()
-        if key == 27:  # 按下Esc键暂停
-            paused = not paused
-        elif key == 32:  # 按下空格键继续
-            paused = not paused
-        elif key == ord('q'):  # 按下q键退出
-            break
     cv2.destroyAllWindows()

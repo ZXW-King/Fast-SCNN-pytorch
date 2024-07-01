@@ -11,13 +11,13 @@ import onnxruntime
 
 class ONNXModel():
     def __init__(self, onnx_file):
-        self.onnx_session = onnxruntime.InferenceSession(onnx_file, providers=['TensorrtExecutionProvider', 'CUDAExecutionProvider',
+        self.onnx_session = onnxruntime.InferenceSession(onnx_file, providers=['CUDAExecutionProvider',
                                                            'CPUExecutionProvider'])
 
         self.input_name = self.get_input_name(self.onnx_session)
         self.output_name = self.get_output_name(self.onnx_session)
-        print("input_name:{}".format(self.input_name))
-        print("output_name:{}".format(self.output_name))
+        # print("input_name:{}".format(self.input_name))
+        # print("output_name:{}".format(self.output_name))
 
     def get_output_name(self, onnx_session):
         output_name = []

@@ -14,7 +14,7 @@ from models.fast_scnn import get_fast_scnn
 from utils.loss import MixSoftmaxCrossEntropyLoss, MixSoftmaxCrossEntropyOHEMLoss
 from utils.lr_scheduler import LRScheduler
 from utils.metric import SegmentationMetric
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 
 def parse_args():

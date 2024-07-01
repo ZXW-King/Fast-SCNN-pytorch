@@ -4,6 +4,7 @@ import argparse
 
 import matplotlib.pyplot as plt
 import torch
+import sys
 import torch.nn.functional as F
 from onnx_test.onnxmodel import ONNXModel
 import cv2
@@ -11,15 +12,15 @@ import numpy as np
 
 from utils.visualize import get_color_pallete
 
-
+new_path = '../../Fast-SCNN-pytorch'
+sys.path.append(new_path)
 
 def GetArgs():
     parser = argparse.ArgumentParser(description="",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    # parser.add_argument("--image", type=str, default="../dataset/02_6178896901985513.jpg",help="")
     parser.add_argument("--image", type=str, default="/media/xin/data/data/seg_data/ours/ORIGIN/20240617_wire/test_select.txt",help="")
-    # parser.add_argument("--model", type=str, default="onnx_model/fast_scnn_wire_best.onnx",help="")
-    parser.add_argument("--model", type=str, default="onnx_model/fast_scnn_wire_best_argmax_256x640.onnx",help="")
+    # parser.add_argument("--model", type=str, default="onnx_model/fast_scnn_wire_best_argmax_224x320.onnx",help="")
+    parser.add_argument("--model", type=str, default="onnx_model/fast_scnn_wire_best_argmax_256x640_no_random.onnx",help="")
     parser.add_argument('--dataset', type=str, default='wire',help='dataset name (default: citys)')
     parser.add_argument('--show_rgb', action='store_true')
     args = parser.parse_args()
@@ -29,19 +30,28 @@ def GetArgs():
 def img_resize(image,target_size):
     H,W,_ = image.shape
     t_h = target_size[0] * 2
+    diff_h = H - t_h
+    cropped_img = image[diff_h:H,:]
+    resize_img = cv2.resize(cropped_img,(target_size[1],target_size[0]))
+    return resize_img
+
+
+def img_crop(image,target_size):
+    H,W,_ = image.shape
     diff_h = H - target_size[0]
     cropped_img = image[diff_h:,:]
-    # diff_h = H - t_h
-    # cropped_img = image[diff_h:H,:]
-    # resize_img = cv2.resize(cropped_img,(target_size[1],target_size[0]))
-    # return resize_img
     return cropped_img
 
 
 def test_onnx(img_path, model_file,dataset,show_rgb=True):
     model = ONNXModel(model_file)
     img_org = cv2.imread(img_path)
-    img_res = img_resize(img_org,(256,640))
+    if "224" in model_file:
+        img_res = img_resize(img_org,(224,320))
+    elif "256" in model_file:
+        img_res = img_crop(img_org,(256,640))
+    else:
+        img_res = img_org
     img = cv2.cvtColor(img_res, cv2.COLOR_BGR2RGB)
     # 将图像转换为 float32 类型并归一化到 [0, 1]
     image = img.astype(np.float32) / 255.0
@@ -65,8 +75,8 @@ def test_onnx(img_path, model_file,dataset,show_rgb=True):
     if not show_rgb:
         cv_image = (pred * 255).astype(np.uint8)
         img_org = cv2.cvtColor(img_res, cv2.COLOR_BGR2GRAY)
-        cv2.imshow("img",img_org)
-        return cv_image
+        # cv2.imshow("img",img_org)
+        # return cv_image
     else:
         mask = get_color_pallete(pred, dataset)
         # 将调色板图像转换为 RGB
@@ -88,8 +98,29 @@ def main():
         with open(img_path) as f:
             for img in f:
                 merged_image = test_onnx(img.strip(), args.model,args.dataset,show_rgb=show_rgb)
-                cv2.imshow('Converted Image', merged_image)
-                cv2.waitKey(500)
+                root_path = "/media/xin/data/data/seg_data/ours/test_data/res_0628"
+                img_name = os.path.basename(img.strip())
+                txt_name = os.path.basename(img_path)
+                if "train" in txt_name:
+                    if "224" in args.model:
+                        save_img_path = os.path.join(root_path,"train","224",img_name)
+                    elif "256" in args.model:
+                        save_img_path = os.path.join(root_path,"train","256",img_name)
+                    else:
+                        save_img_path = os.path.join(root_path, "train", "480", img_name)
+                if "test" in txt_name:
+                    if "224" in args.model:
+                        save_img_path = os.path.join(root_path,"test","224",img_name)
+                    elif "256" in args.model:
+                        save_img_path = os.path.join(root_path,"test","256",img_name)
+                    else:
+                        save_img_path = os.path.join(root_path,"test","480",img_name)
+                if not os.path.exists(os.path.dirname(save_img_path)):
+                    os.makedirs(os.path.dirname(save_img_path))
+                print(f"save_img_path:{save_img_path}")
+                cv2.imwrite(save_img_path,merged_image)
+                # cv2.imshow('Converted Image', merged_image)
+                # cv2.waitKey(500)
     else:
         merged_image = test_onnx(img_path,args.model,args.dataset,show_rgb=show_rgb)
         cv2.imshow('Converted Image', merged_image)
