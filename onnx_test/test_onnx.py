@@ -17,7 +17,8 @@ def GetArgs():
     parser = argparse.ArgumentParser(description="",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # parser.add_argument("--image", type=str, default="../dataset/02_6178896901985513.jpg",help="")
-    parser.add_argument("--image", type=str, default="/media/xin/data/data/seg_data/ours/ORIGIN/20240617_wire/test_select.txt",help="")
+    # parser.add_argument("--image", type=str, default="/media/xin/data/data/seg_data/ours/ORIGIN/20240617_wire/test_select.txt",help="")
+    parser.add_argument("--image", type=str, default="/media/xin/data/data/seg_data/ours/label_data_test/test.txt",help="")
     # parser.add_argument("--model", type=str, default="onnx_model/fast_scnn_wire_best.onnx",help="")
     parser.add_argument("--model", type=str, default="onnx_model/fast_scnn_wire_best_argmax.onnx",help="")
     parser.add_argument('--dataset', type=str, default='wire',help='dataset name (default: citys)')

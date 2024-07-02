@@ -121,3 +121,4 @@ test_result/
 train_weights/
 log/
 *.onnx
+test_py.py

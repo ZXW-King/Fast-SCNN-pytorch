@@ -1,12 +1,13 @@
+import cv2
 import numpy as np
 from PIL import Image
 def _class_to_index(mask):
-    key = np.array([-1, -1, -1, -1, -1, -1,
-                          -1, -1, 0, 1, -1, -1,
-                          2, 3, 4, -1, -1, -1,
-                          5, -1, 6, 7, 8, 9,
-                          10, 11, 12, 13, 14, 15,
-                          -1, -1, 16, 17, 18])
+    key = np.array([1, 1, 1, 1, 1, 1,
+                              1, 1, 0, 1, 1, 1,
+                              1, 1, 1, 1, 1, 1,
+                              1, 1, 1, 1, 1, 1,
+                              1, 1, 1, 1, 1, 1,
+                              1, 1, 1, 1, 1])
     mapping = np.array(range(-1, len(key) - 1)).astype('int32')
 
     values = np.unique(mask)
@@ -38,10 +39,26 @@ def get_crop_resize_img(img_path):
     print(f"Resized image size: {resized_img.size}")
 
 
+def get_img_point():
+    # 读取图像
+    image = cv2.imread('/media/xin/work/github_pro/seg_model/Fast-SCNN-pytorch/dataset/02_6178896901985513.jpg',0)
+    thresh1,image = cv2.threshold(image,127,255,cv2.THRESH_BINARY)
+    # 获取图像的高度和宽度
+    height, width = image.shape
+
+    # 获取所有像素点的坐标并存储在一个列表中
+    for x in range(height):
+        for y in range(width):
+            print(type(image[x, y]))
+            if image[x, y] == 0:
+                print(image[x,y])
+
+
+
 if __name__ == '__main__':
-    # mask = np.random.randint(7,22,(3,3))
-    mask = np.full(3,0)
+    mask = np.random.randint(7,22,(3,3))
+    # mask = np.full(3,0)
     print(mask)
     print(_class_to_index(mask))
-    get_crop_resize_img("/media/xin/work/github_pro/seg_model/Fast-SCNN-pytorch/dataset/02_6178896901985513.jpg")
-
+    # get_crop_resize_img("/media/xin/work/github_pro/seg_model/Fast-SCNN-pytorch/dataset/02_6178896901985513.jpg")
+    # get_img_point()

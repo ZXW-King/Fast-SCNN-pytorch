@@ -40,7 +40,7 @@ class WireSegmentation(data.Dataset):
     >>>     num_workers=4)
     """
     BASE_DIR = 'wire'
-    NUM_CLASS = 3
+    NUM_CLASS = 2
 
     def __init__(self, root='./datasets/citys', split='train', mode=None, transform=None,
                  base_size=256, crop_size=640, version='s0.0.1',**kwargs):

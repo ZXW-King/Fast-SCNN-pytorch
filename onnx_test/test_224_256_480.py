@@ -98,29 +98,29 @@ def main():
         with open(img_path) as f:
             for img in f:
                 merged_image = test_onnx(img.strip(), args.model,args.dataset,show_rgb=show_rgb)
-                root_path = "/media/xin/data/data/seg_data/ours/test_data/res_0628"
-                img_name = os.path.basename(img.strip())
-                txt_name = os.path.basename(img_path)
-                if "train" in txt_name:
-                    if "224" in args.model:
-                        save_img_path = os.path.join(root_path,"train","224",img_name)
-                    elif "256" in args.model:
-                        save_img_path = os.path.join(root_path,"train","256",img_name)
-                    else:
-                        save_img_path = os.path.join(root_path, "train", "480", img_name)
-                if "test" in txt_name:
-                    if "224" in args.model:
-                        save_img_path = os.path.join(root_path,"test","224",img_name)
-                    elif "256" in args.model:
-                        save_img_path = os.path.join(root_path,"test","256",img_name)
-                    else:
-                        save_img_path = os.path.join(root_path,"test","480",img_name)
-                if not os.path.exists(os.path.dirname(save_img_path)):
-                    os.makedirs(os.path.dirname(save_img_path))
-                print(f"save_img_path:{save_img_path}")
-                cv2.imwrite(save_img_path,merged_image)
-                # cv2.imshow('Converted Image', merged_image)
-                # cv2.waitKey(500)
+                # root_path = "/media/xin/data/data/seg_data/ours/test_data/res_0628"
+                # img_name = os.path.basename(img.strip())
+                # txt_name = os.path.basename(img_path)
+                # if "train" in txt_name:
+                #     if "224" in args.model:
+                #         save_img_path = os.path.join(root_path,"train","224",img_name)
+                #     elif "256" in args.model:
+                #         save_img_path = os.path.join(root_path,"train","256",img_name)
+                #     else:
+                #         save_img_path = os.path.join(root_path, "train", "480", img_name)
+                # if "test" in txt_name:
+                #     if "224" in args.model:
+                #         save_img_path = os.path.join(root_path,"test","224",img_name)
+                #     elif "256" in args.model:
+                #         save_img_path = os.path.join(root_path,"test","256",img_name)
+                #     else:
+                #         save_img_path = os.path.join(root_path,"test","480",img_name)
+                # if not os.path.exists(os.path.dirname(save_img_path)):
+                #     os.makedirs(os.path.dirname(save_img_path))
+                # print(f"save_img_path:{save_img_path}")
+                # cv2.imwrite(save_img_path,merged_image)
+                cv2.imshow('Converted Image', merged_image)
+                cv2.waitKey(100)
     else:
         merged_image = test_onnx(img_path,args.model,args.dataset,show_rgb=show_rgb)
         cv2.imshow('Converted Image', merged_image)

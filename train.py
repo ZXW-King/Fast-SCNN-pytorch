@@ -107,7 +107,7 @@ class Trainer(object):
 
         # create criterion
         self.criterion = MixSoftmaxCrossEntropyOHEMLoss(aux=args.aux, aux_weight=args.aux_weight,
-                                                        ignore_index=-1,use_weight=False).to(args.device)
+                                                        ignore_index=-1,use_weight=True).to(args.device)
 
         # optimizer
         self.optimizer = torch.optim.SGD(self.model.parameters(),
