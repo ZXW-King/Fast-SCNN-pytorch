@@ -33,6 +33,8 @@ def parse_args():
                         help='crop image size')
     parser.add_argument('--train-split', type=str, default='train',
                         help='dataset train split (default: train)')
+    parser.add_argument('--data_version', type=str, default='',
+                        help='dataset train version')
     parser.add_argument('--train_version', type=str, default='',
                         help='dataset train version')
     # training hyper params
@@ -81,8 +83,8 @@ class Trainer(object):
         ])
         # dataset and dataloader
         data_kwargs = {'transform': input_transform, 'base_size': args.base_size, 'crop_size': args.crop_size}
-        train_dataset = get_segmentation_dataset(args.dataset, root=args.data_path,split=args.train_split, mode='train',version=args.train_version, **data_kwargs)
-        val_dataset = get_segmentation_dataset(args.dataset, root=args.data_path,split='val', mode='val', version=args.train_version,**data_kwargs)
+        train_dataset = get_segmentation_dataset(args.dataset, root=args.data_path,split=args.train_split, mode='train',version=args.data_version, **data_kwargs)
+        val_dataset = get_segmentation_dataset(args.dataset, root=args.data_path,split='val', mode='val', version=args.data_version,**data_kwargs)
         self.train_loader = data.DataLoader(dataset=train_dataset,
                                             batch_size=args.batch_size,
                                             shuffle=True,
