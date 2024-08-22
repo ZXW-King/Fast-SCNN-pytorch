@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import torch
 from PIL import Image
 def _class_to_index(mask):
     key = np.array([1, 1, 1, 1, 1, 1,
@@ -53,12 +54,29 @@ def get_img_point():
             if image[x, y] == 0:
                 print(image[x,y])
 
+def is_img_same(img1,img2):
+    # 读取图像
+    image1 = cv2.imread(img1)
+    image2 = cv2.imread(img2)
 
+    # 比较图像是否大小相同
+    if image1.shape == image2.shape:
+        # 逐像素比较
+        difference = cv2.subtract(image1, image2)
+        b, g, r = cv2.split(difference)
+
+        if cv2.countNonZero(b) == 0 and cv2.countNonZero(g) == 0 and cv2.countNonZero(r) == 0:
+            print("两张图像相同")
+        else:
+            print("两张图像不同")
+    else:
+        print("两张图像大小不同，无法比较")
 
 if __name__ == '__main__':
-    mask = np.random.randint(7,22,(3,3))
-    # mask = np.full(3,0)
-    print(mask)
-    print(_class_to_index(mask))
+    # mask = np.random.randint(7,22,(3,3))
+    # # mask = np.full(3,0)
+    # print(mask)
+    # print(_class_to_index(mask))
     # get_crop_resize_img("/media/xin/work/github_pro/seg_model/Fast-SCNN-pytorch/dataset/02_6178896901985513.jpg")
     # get_img_point()
+    is_img_same("dataset/same_img/947176970284.jpg", "dataset/same_img/947176970460.jpg")
